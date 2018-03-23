@@ -3,8 +3,10 @@ package com.istresearch.galton;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
+import net.logstash.logback.marker.LogstashMarker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -22,12 +24,12 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
     /**
      * Collection of gauges configured in logback.xml
      */
-    private Map<String, String> gauges = new HashMap<>();
+    private Map<String, Metric> gauges = new HashMap<>();
 
     /**
      * Collection of counters configured in logback.xml
      */
-    private List<String> counters = new ArrayList<>();
+    private Map<String, Metric> counters = new HashMap<>();
 
     /**
      * Prefix used in log marker entry to indicate the type is a gauge.
@@ -63,25 +65,49 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
      *
      * @return
      */
-    public Map<String, String> getGauges() { return gauges; }
+    public Map<String, Metric> getGauges() { return gauges; }
 
     /**
      *
      * @param gauge
      */
-    public void addGauge(Gauge gauge) { gauges.put(gauge.getKey(), gauge.getValue()); }
-
-    /**
-     *
-     * @param counter
-     */
-    public void addCounter(String counter) { counters.add(counter); }
+    public void addGauge(Metric gauge) {
+        if(gauge.getLogsMsg() != null) {
+            System.out.println("adding gauge: " + gauge.getLogsMsg());
+            gauges.put(gauge.getLogsMsg(), gauge);
+        }
+        else if (gauge.getMarkerKey() != null) {
+            System.out.println("adding gauge: " + gauge.getMarkerKey());
+            gauges.put(gauge.getMarkerKey(), gauge);
+        }
+        else {
+            LOG.error("Invalid gauge configuration - markerKey field is required");
+        }
+    }
 
     /**
      *
      * @return
      */
-    public List<String> getCounters() { return counters; }
+    public Map<String, Metric> getCounters() { return counters; }
+
+    /**
+     *
+     * @param counter
+     */
+    public void addCounter(Metric counter) {
+        if(counter.getLogsMsg() != null) {
+            System.out.println("adding counter " + counter.getLogsMsg());
+            counters.put(counter.getLogsMsg(), counter);
+        }
+        else if(counter.getMarkerKey() != null) {
+            System.out.println("adding counter " + counter.getMarkerKey());
+            counters.put(counter.getMarkerKey(), counter);
+        }
+        else {
+            LOG.error("Invalid counter configuration - either a logMsg or markerKey field is required.");
+        }
+    }
 
     /**
      *
@@ -162,53 +188,81 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
     @Override
     protected void append(final ILoggingEvent event) {
         Marker marker = event.getMarker();
-        String metricName = event.getMessage().toLowerCase().replace(" ", "_");
-        if(getCounters().contains(metricName)) { publishCounterMetric(metricName); }
+        Map<String, Object> markerMap = convertMarkerToMap(marker);
+        String logMsg = event.getMessage().toLowerCase().replace(" ", "_");
 
-        if(marker != null) {
-            Map<String, String> markerMap = convertMarkerToMap(marker);
-            if(getGauges().containsKey(metricName)) {
-                //obtains the marker key specified in the logback.xml that correlates w/ the metricName (message)
-                publishGaugeMetric(metricName, Integer.valueOf(markerMap.get(getGauges().get(metricName))));
+        //checks metric config to see if logMsg was used for a counter
+        if(getCounters().containsKey(logMsg)) {
+            Metric m = getCounters().get(logMsg);
+            if(markerMap.containsKey("tags")) m.addTags((Map<String, String>)markerMap.get("tags"));
+            publishCounterMetric(m);
+        }
+        //checks metric config to see if logMsg was used for a gauge
+        if(getGauges().containsKey(logMsg)) {
+            Metric m = getGauges().get(logMsg);
+            if(markerMap.containsKey("tags")) m.addTags((Map<String, String>)markerMap.get("tags"));
+            publishGaugeMetric(m, Integer.valueOf(String.valueOf(markerMap.get(m.getMarkerKey()))));
+        }
+        for(String key : markerMap.keySet()) {
+            //checks each key to see if it contains the prefix
+            if(key.contains(getCounterPrefix())) {
+                Metric m = new Metric();
+                m.setMetricName(String.valueOf(markerMap.get(key)));
+                if(markerMap.containsKey("tags")) m.addTags((Map<String, String>)markerMap.get("tags"));
+                publishCounterMetric(m);
             }
-            for(String key : markerMap.keySet()) {
-                //checks each key to see if it contains the prefix
-                if(key.contains(getCounterPrefix())) { publishCounterMetric(markerMap.get(key)); }
-                else if(key.contains(getGaugePrefix())) {
-                    publishGaugeMetric(key.replace(getGaugePrefix(), ""),
-                            Integer.valueOf(markerMap.get(key)));
-                }
-                if(getCounters().contains(key)) { publishCounterMetric(key); }
-                if(getGauges().containsKey(key)) { publishGaugeMetric(metricName, Integer.valueOf(markerMap.get(key))); }
+            else if(key.contains(getGaugePrefix())) {
+                Metric m = new Metric();
+                m.setMarkerKey(key.replace(getGaugePrefix(), ""));
+                if(markerMap.containsKey("tags")) m.addTags((Map<String, String>)markerMap.get("tags"));
+                publishGaugeMetric(m, Integer.valueOf(String.valueOf(markerMap.get(key))));
+            }
+            //checks to see if the marker key was used in the metric config (requires logMsg to be absent for this metric).
+            if(getCounters().containsKey(key)) {
+                if(markerMap.containsKey("tags")) getCounters().get(key).addTags((Map<String, String>)markerMap.get("tags"));
+                publishCounterMetric(getCounters().get(key));
+            }
+            if(getGauges().containsKey(key)) {
+                if(markerMap.containsKey("tags")) getGauges().get(key).addTags((Map<String, String>)markerMap.get("tags"));
+                publishGaugeMetric(getGauges().get(key), Integer.valueOf(String.valueOf(markerMap.get(key))));
             }
         }
     }
 
     /**
-     * Sort of a hack to obtain the key/value pairs in the marker
+     * Converts the Logstash Marker into a HashMap<String, Object>
      * @param marker
      * @return Map
      */
-    private Map<String, String> convertMarkerToMap(Marker marker) {
-        String markerStr = marker.toString();
-        Map<String, String> markerMap = new HashMap<>();
-        for(String m : markerStr.split(", ")) {
-            m = m.replace("{", "");
-            m = m.replace("}", "");
-            String [] s = m.split("=");
-            markerMap.put(s[0], s[1]);
+    public static Map<String, Object> convertMarkerToMap(Marker marker) {
+        Map<String, Object> markerMap = new HashMap<String, Object>();
+        if(marker == null) return markerMap;
+        try {
+            MarkerMapGenerator generator = new MarkerMapGenerator();
+            ((LogstashMarker)marker).writeTo(generator);
+            markerMap = generator.getMap();
+        } catch(Exception e) {
+            LOG.error("Error converting marker to map", e);
         }
         return markerMap;
     }
 
     /**
      * Publishes the counter to all meter registries
-     * @param name
+     * @param counter Metric
      */
-    private void publishCounterMetric(String name) {
+    private void publishCounterMetric(Metric counter) {
         for(MeterRegistry registry : getRegistries()) {
-            Counter counter = registry.counter(getAppPrefix() + name);
-            counter.increment();
+            Counter registryCounter;
+            if(!counter.getTags().isEmpty()) {
+                LOG.debug(String.format("publishing counter %s %s", counter.getName(getAppPrefix()), counter.getMicroMeterTags()));
+                registryCounter = registry.counter(counter.getName(getAppPrefix()), counter.getMicroMeterTags());
+            }
+            else {
+                LOG.debug(String.format("publishing counter %s", counter.getName(getAppPrefix())));
+                registryCounter = registry.counter(counter.getName(getAppPrefix()));
+            }
+            registryCounter.increment();
             LOG.debug(String.format("registry %s has %d meters",
                         registry.getClass().getTypeName(),
                         registry.getMeters().size()));
@@ -217,22 +271,79 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
 
     /**
      * Publishes the gauge to all meter registries
-     * @param name
-     * @param val
+     * @param gauge Metric
+     * @param value int
      */
-    private void publishGaugeMetric(String name, int val) {
+    private void publishGaugeMetric(Metric gauge, int value) {
         for(MeterRegistry registry : getRegistries()) {
-            registry.gauge(getAppPrefix() + name, new AtomicInteger(val));
+            if(!gauge.getTags().isEmpty()) {
+                LOG.debug("publishing gauge %s %s %n", gauge.getName(getAppPrefix()), gauge.getMicroMeterTags().toArray(), new AtomicInteger(value));
+                registry.gauge(gauge.getName(getAppPrefix()), gauge.getMicroMeterTags(), new AtomicInteger(value));
+            }
+            else {
+                LOG.debug(String.format("publishing gauge: %s %n", gauge.getName(getAppPrefix()), new AtomicInteger(value)));
+                registry.gauge(gauge.getName(getAppPrefix()), new AtomicInteger(value));
+            }
             LOG.debug(String.format("registry %s has %d meters",
                         registry.getClass().getTypeName(),
                         registry.getMeters().size()));
         }
     }
+    
+    /**
+     * Simple metric def for config injection
+     */
+    public static class Metric {
+        private String logMsg;
+        private String markerKey;
+        private String metricName;
+        private List<Tag> tags = new ArrayList<>();
+        private List<io.micrometer.core.instrument.Tag> microMeterTags = new ArrayList<>();
+
+        public String getLogsMsg() { return logMsg; }
+        public void setLogMsg(String logMsg) { this.logMsg = logMsg; }
+
+        public String getMarkerKey() { return markerKey; }
+        public void setMarkerKey(String markerKey) { this.markerKey = markerKey; }
+
+        public String getMetricName() { return metricName; }
+        public void setMetricName(String metricName) { this.metricName = metricName; }
+
+        public void addTag(Tag tag) { tags.add(tag); }
+        public List<Tag> getTags() { return tags; }
+
+        public void addTags(Map<String, String> tags) {
+            for(String t : tags.keySet()) {
+                Tag tag = new Tag();
+                tag.setKey(t);
+                tag.setValue(tags.get(t));
+                addTag(tag);
+                microMeterTags.add(new ImmutableTag(t, tags.get(t)));
+            }
+        }
+
+        public List<io.micrometer.core.instrument.Tag> getMicroMeterTags(){
+            return microMeterTags;
+        }
+
+        public String getName(String prefix) {
+            if(getMetricName() != null) {
+                prefix += getMetricName();
+            }
+            else if(getMarkerKey() != null) {
+                prefix += getMarkerKey();
+            }
+            else if(getLogsMsg() != null) {
+                prefix += getLogsMsg();
+            }
+            return prefix;
+        }
+    }
 
     /**
-     * Simple Gauge def for config injection
+     * Simple tag def for config injection
      */
-    public static class Gauge {
+    public static class Tag  {
         private String key;
         private String value;
 

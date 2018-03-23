@@ -9,25 +9,51 @@
 
     <appender name="METRICS" class="com.istresearch.galton.MetricsAppender">
         <datadogConfig>
-            <apiKey>dd_api_key</apiKey>
-            <applicationKey>dd_app_key</applicationKey>
+            <apiKey></apiKey>
+            <applicationKey></applicationKey>
         </datadogConfig>
         <!-- gaugePrefix and counterPrefix can be used in the log markers
              to indicate they have metrics to be collected -->
         <gaugePrefix>galton.gauge.</gaugePrefix>
         <counterPrefix>galton.counter</counterPrefix>
         <!-- appPrefix is prepended to the metric names that are pushed to datadog -->
-        <appPrefix>cooper2</appPrefix>
+        <appPrefix>galton-test</appPrefix>
+
         <gauge>
-            <key>an_important_stmt</key>
-            <value>an_important_gauge</value>
+            <logMsg>test_gauge_log_msg1</logMsg>
+            <markerKey>test_gauge_marker_key1</markerKey>
+            <metricName>test_gauge_metric_name1</metricName>
+            <tag>
+                <key>test_gauge_static_tag_key</key>
+                <value>test_gauge_static_tag_value</value>
+            </tag>
+            <tag>
+                <key>test_gauge_static_tag_key2</key>
+                <value>test_gauge_static_tag_value2</value>
+            </tag>
         </gauge>
         <gauge>
-            <key>some_stmt</key>
-            <value>some_gauge</value>
+            <logMsg>test_gauge_log_msg2</logMsg>
+            <markerKey>test_gauge_marker_key2</markerKey>
         </gauge>
-        <counter>rule_deactivation_pending</counter>
-        <counter>something_else</counter>
+        <counter>
+            <logMsg>test_counter_log_msg1</logMsg>
+            <metricName>test_counter_metric_name1</metricName>
+            <tag>
+                <key>test_counter_static_tag_key</key>
+                <value>test_counter_static_tag_value</value>
+            </tag>
+        </counter>
+        <counter>
+            <logMsg>test_counter_log_msg2</logMsg>
+        </counter>
+        <counter>
+            <logMsg>test_counter_log_msg3</logMsg>
+            <metricName>test_counter_metric_name1</metricName>
+        </counter>
+        <counter>
+            <markerKey>test_counter_marker_key2</markerKey>
+        </counter>
     </appender>
 
     <root level="INFO">

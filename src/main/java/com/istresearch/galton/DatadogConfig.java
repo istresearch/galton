@@ -4,6 +4,9 @@ import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 
+/**
+ * Datadog Configuration
+ */
 public class DatadogConfig implements io.micrometer.datadog.DatadogConfig {
 
     private String apiKey;
