@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Extends the Logback AppenderBase to publish metrics to registries configured in logback.xml.
+ *
  */
 public class MetricsAppender extends AppenderBase<ILoggingEvent> {
 
@@ -184,6 +185,11 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
 
     /**
      * {@inheritDoc}
+     *
+     * TODO: Currently for gauges, this method requires a Map to be included in a LogstashMarker.
+     *  This method should also support a Map that's passed in as an argument to the logger.
+     *  ie. logger.info("some message", metricMap); It can be obtained by event.getArgumentArray().
+     *  This will provide an option that doesn't require client's to use the LogstashMarker.
      */
     @Override
     protected void append(final ILoggingEvent event) {
