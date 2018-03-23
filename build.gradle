@@ -1,6 +1,8 @@
-plugins {
-    id 'java-library'
-}
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'java-library'
+group = 'com.github.istresearch'
+version = '0.0.1-alpha'
 
 dependencies {
     compile 'org.slf4j:slf4j-api:1.7.25'
@@ -18,4 +20,5 @@ repositories {
     jcenter()
     maven { url "http://repo.spring.io/libs-release" }
     maven { url 'https://repo.spring.io/libs-snapshot' }
+    maven { url 'https://jitpack.io' }
 }
