@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %marker%n</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="METRICS" class="com.istresearch.galton.MetricsAppender">
+        <datadogConfig>
+            <apiKey></apiKey>
+            <applicationKey></applicationKey>
+        </datadogConfig>
+        <!-- gaugePrefix and counterPrefix can be used in the log markers
+             to indicate they have metrics to be collected -->
+        <gaugePrefix>galton.gauge.</gaugePrefix>
+        <counterPrefix>galton.counter</counterPrefix>
+        <!-- appPrefix is prepended to the metric names that are pushed to datadog -->
+        <appPrefix>galton-test</appPrefix>
+
+        <gauge>
+            <logMsg>test_gauge_log_msg1</logMsg>
+            <markerKey>test_gauge_marker_key1</markerKey>
+            <metricName>test_gauge_metric_name1</metricName>
+            <tag>
+                <key>test_gauge_static_tag_key</key>
+                <value>test_gauge_static_tag_value</value>
+            </tag>
+            <tag>
+                <key>test_gauge_static_tag_key2</key>
+                <value>test_gauge_static_tag_value2</value>
+            </tag>
+        </gauge>
+        <gauge>
+            <logMsg>test_gauge_log_msg2</logMsg>
+            <markerKey>test_gauge_marker_key2</markerKey>
+        </gauge>
+        <counter>
+            <logMsg>test_counter_log_msg1</logMsg>
+            <metricName>test_counter_metric_name1</metricName>
+            <tag>
+                <key>test_counter_static_tag_key</key>
+                <value>test_counter_static_tag_value</value>
+            </tag>
+        </counter>
+        <counter>
+            <logMsg>test_counter_log_msg2</logMsg>
+        </counter>
+        <counter>
+            <logMsg>test_counter_log_msg3</logMsg>
+            <metricName>test_counter_metric_name1</metricName>
+        </counter>
+        <counter>
+            <markerKey>test_counter_marker_key2</markerKey>
+        </counter>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="METRICS" />
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>
