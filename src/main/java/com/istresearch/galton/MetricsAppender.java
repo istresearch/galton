@@ -74,11 +74,9 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
      */
     public void addGauge(Metric gauge) {
         if(gauge.getLogsMsg() != null) {
-            System.out.println("adding gauge: " + gauge.getLogsMsg());
             gauges.put(gauge.getLogsMsg(), gauge);
         }
         else if (gauge.getMarkerKey() != null) {
-            System.out.println("adding gauge: " + gauge.getMarkerKey());
             gauges.put(gauge.getMarkerKey(), gauge);
         }
         else {
@@ -98,11 +96,9 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
      */
     public void addCounter(Metric counter) {
         if(counter.getLogsMsg() != null) {
-            System.out.println("adding counter " + counter.getLogsMsg());
             counters.put(counter.getLogsMsg(), counter);
         }
         else if(counter.getMarkerKey() != null) {
-            System.out.println("adding counter " + counter.getMarkerKey());
             counters.put(counter.getMarkerKey(), counter);
         }
         else {
@@ -241,16 +237,16 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
      * @return Map
      */
     public static Map<String, Object> convertMarkerToMap(Marker marker) {
-        Map<String, Object> markerMap = new HashMap<String, Object>();
-        if(marker == null) return markerMap;
-        try {
-            MarkerMapGenerator generator = new MarkerMapGenerator();
-            ((LogstashMarker)marker).writeTo(generator);
-            markerMap = generator.getMap();
-        } catch(Exception e) {
-            LOG.error("Error converting marker to map", e);
+        if(marker != null) {
+            try {
+                MarkerMapGenerator generator = new MarkerMapGenerator();
+                ((LogstashMarker)marker).writeTo(generator);
+                return generator.getMap();
+            } catch(Exception e) {
+                LOG.error("Error converting marker to map", e);
+            }
         }
-        return markerMap;
+        return Collections.emptyMap();
     }
 
     /**
