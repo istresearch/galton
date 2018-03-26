@@ -191,7 +191,7 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
     protected void append(final ILoggingEvent event) {
         Marker marker = event.getMarker();
         Map<String, Object> markerMap = convertMarkerToMap(marker);
-        String logMsg = event.getMessage().toLowerCase().replace(" ", "_");
+        String logMsg = transformMessage(event.getMessage());
 
         //checks metric config to see if logMsg was used for a counter
         if(getCounters().containsKey(logMsg)) {
@@ -291,7 +291,18 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
                         registry.getMeters().size()));
         }
     }
-    
+
+    /**
+     * Reduces the log message to a lower-case alpha String that's valid as a metric key in
+     *  the target monitoring systems.
+     * @param msg
+     * @return String
+     */
+    public static String transformMessage(String msg) {
+        return msg.replaceAll(" ", "_")
+                    .replaceAll("[^a-zA-Z_]", "").toLowerCase();
+    }
+
     /**
      * Simple metric def for config injection
      */
