@@ -1,6 +1,7 @@
 package com.istresearch.galton.test;
 
 import com.istresearch.galton.MarkerMapGenerator;
+import com.istresearch.galton.MetricsAppender;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
 import org.junit.Test;
@@ -306,6 +307,12 @@ public class MetricsAppenderTest {
             }
             i++;
         }
+    }
+
+    @Test public void testTransformMessage() {
+        String s = "this IS a log msg; it canno0t \"easily\" be imported as a metric name ..., need to transform";
+        assertEquals("this_is_a_log_msg_it_cannot_easily_be_imported_as_a_metric_name__need_to_transform",
+                MetricsAppender.transformMessage(s));
     }
 
 }
