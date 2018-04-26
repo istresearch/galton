@@ -5,7 +5,7 @@ import io.micrometer.core.lang.Nullable;
 import java.time.Duration;
 
 /**
- * Datadog Configuration
+ * Datadog Statsd Configuration
  */
 public class DogStatsdConfig implements io.micrometer.statsd.StatsdConfig {
 
