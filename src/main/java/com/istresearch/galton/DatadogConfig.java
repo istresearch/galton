@@ -40,7 +40,7 @@ public class DatadogConfig implements io.micrometer.datadog.DatadogConfig {
      * {@inheritDoc}
      */
     @Override
-    public Duration step() { return Duration.ofSeconds(1); }
+    public Duration step() { return Duration.ofSeconds(10); }
 
     /**
      * {@inheritDoc}

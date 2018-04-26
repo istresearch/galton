@@ -63,6 +63,11 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
     private DatadogConfig datadogConfig;
 
     /**
+     * DogStatsdConfig from logback.xml
+     */
+    private DogStatsdConfig dogStatsdConfig;
+
+    /**
      *
      * @return
      */
@@ -156,6 +161,22 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
     {
         this.datadogConfig = datadogConfig;
         configs.add(this.datadogConfig);
+    }
+
+    /**
+     *
+     * @return DogStatsdConfig
+     */
+    public DogStatsdConfig getDogStatsdConfig() { return dogStatsdConfig; }
+
+    /**
+     *
+     * @param dogStatsdConfig
+     */
+    public void setDogStatsdConfig(DogStatsdConfig dogStatsdConfig)
+    {
+        this.dogStatsdConfig = dogStatsdConfig;
+        configs.add(this.dogStatsdConfig);
     }
 
     /**
