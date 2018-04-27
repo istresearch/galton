@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.statsd.StatsdMeterRegistry;
 
 /**
  * Simple factory class that expects a Config (injected in Logback.xml)
@@ -19,6 +20,9 @@ public class MeterRegistryFactory {
     public static MeterRegistry createInstance(MeterRegistryConfig config) {
         if(config instanceof DatadogConfig) {
             return new DatadogMeterRegistry((DatadogConfig)config, Clock.SYSTEM);
+        }
+        else if(config instanceof StatsdConfig){
+            return new StatsdMeterRegistry((StatsdConfig)config, Clock.SYSTEM);
         }
         return null;
     }
