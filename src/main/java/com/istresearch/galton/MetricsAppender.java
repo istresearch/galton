@@ -63,9 +63,9 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
     private DatadogConfig datadogConfig;
 
     /**
-     * DogStatsdConfig from logback.xml
+     * StatsdConfig from logback.xml
      */
-    private DogStatsdConfig dogStatsdConfig;
+    private StatsdConfig statsdConfig;
 
     /**
      *
@@ -165,18 +165,18 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
 
     /**
      *
-     * @return DogStatsdConfig
+     * @return StatsdConfig
      */
-    public DogStatsdConfig getDogStatsdConfig() { return dogStatsdConfig; }
+    public StatsdConfig getStatsdConfig() { return statsdConfig; }
 
     /**
      *
-     * @param dogStatsdConfig
+     * @param statsdConfig
      */
-    public void setDogStatsdConfig(DogStatsdConfig dogStatsdConfig)
+    public void setStatsdConfig(StatsdConfig statsdConfig)
     {
-        this.dogStatsdConfig = dogStatsdConfig;
-        configs.add(this.dogStatsdConfig);
+        this.statsdConfig = statsdConfig;
+        configs.add(this.statsdConfig);
     }
 
     /**
@@ -191,7 +191,7 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
      * @return List
      */
     public List<MeterRegistry> getRegistries() {
-        if(this.registries.isEmpty()) {
+        if(this.registries.isEmpty() || this.registries.size() != getConfigs().size()) {
             for(MeterRegistryConfig config : getConfigs()) {
                 MeterRegistry r = MeterRegistryFactory.createInstance(config);
                 if(r != null) this.registries.add(r);
@@ -213,6 +213,8 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
         Marker marker = event.getMarker();
         Map<String, Object> markerMap = convertMarkerToMap(marker);
         String logMsg = transformMessage(event.getMessage());
+
+
 
         //checks metric config to see if logMsg was used for a counter
         if(getCounters().containsKey(logMsg)) {

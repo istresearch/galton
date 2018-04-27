@@ -7,7 +7,7 @@ import java.time.Duration;
 /**
  * Datadog Statsd Configuration
  */
-public class DogStatsdConfig implements io.micrometer.statsd.StatsdConfig {
+public class StatsdConfig implements io.micrometer.statsd.StatsdConfig {
 
     private String host;
 
@@ -27,7 +27,7 @@ public class DogStatsdConfig implements io.micrometer.statsd.StatsdConfig {
      * {@inheritDoc}
      */
     @Override
-    public Duration step() { return Duration.ofSeconds(10); }
+    public Duration step() { return Duration.ofSeconds(1); }
 
     /**
      * {@inheritDoc}

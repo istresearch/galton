@@ -8,15 +8,10 @@
     </appender>
 
     <appender name="METRICS" class="com.istresearch.galton.MetricsAppender">
-        <!--
-        <datadogConfig>
-            <apiKey></apiKey>
-            <applicationKey></applicationKey>
-        </datadogConfig>
-        -->
-        <dogStatsdConfig>
+
+        <statsdConfig>
             <host>localhost</host>
-        </dogStatsdConfig>
+        </statsdConfig>
         <!-- gaugePrefix and counterPrefix can be used in the log markers
              to indicate they have metrics to be collected -->
         <gaugePrefix>galton.gauge.</gaugePrefix>

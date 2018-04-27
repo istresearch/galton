@@ -21,8 +21,8 @@ public class MeterRegistryFactory {
         if(config instanceof DatadogConfig) {
             return new DatadogMeterRegistry((DatadogConfig)config, Clock.SYSTEM);
         }
-        else if(config instanceof DogStatsdConfig){
-            return new StatsdMeterRegistry((DogStatsdConfig)config, Clock.SYSTEM);
+        else if(config instanceof StatsdConfig){
+            return new StatsdMeterRegistry((StatsdConfig)config, Clock.SYSTEM);
         }
         return null;
     }
