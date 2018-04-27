@@ -63,6 +63,11 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
     private DatadogConfig datadogConfig;
 
     /**
+     * StatsdConfig from logback.xml
+     */
+    private StatsdConfig statsdConfig;
+
+    /**
      *
      * @return
      */
@@ -159,6 +164,22 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
     }
 
     /**
+     *
+     * @return StatsdConfig
+     */
+    public StatsdConfig getStatsdConfig() { return statsdConfig; }
+
+    /**
+     *
+     * @param statsdConfig
+     */
+    public void setStatsdConfig(StatsdConfig statsdConfig)
+    {
+        this.statsdConfig = statsdConfig;
+        configs.add(this.statsdConfig);
+    }
+
+    /**
      * @return List
      */
     public List<MeterRegistryConfig> getConfigs() {
@@ -192,6 +213,8 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
         Marker marker = event.getMarker();
         Map<String, Object> markerMap = convertMarkerToMap(marker);
         String logMsg = transformMessage(event.getMessage());
+
+
 
         //checks metric config to see if logMsg was used for a counter
         if(getCounters().containsKey(logMsg)) {
