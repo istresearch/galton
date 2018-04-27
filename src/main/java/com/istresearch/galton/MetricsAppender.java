@@ -191,7 +191,7 @@ public class MetricsAppender extends AppenderBase<ILoggingEvent> {
      * @return List
      */
     public List<MeterRegistry> getRegistries() {
-        if(this.registries.isEmpty() || this.registries.size() != getConfigs().size()) {
+        if(this.registries.isEmpty()) {
             for(MeterRegistryConfig config : getConfigs()) {
                 MeterRegistry r = MeterRegistryFactory.createInstance(config);
                 if(r != null) this.registries.add(r);
